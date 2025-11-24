@@ -46,6 +46,7 @@ export class AuthService {
         password: hashedPassword,
         position,
         provider: 'LOCAL',
+        status: 'APPROVED',
       },
       select: {
         id: true,
@@ -60,7 +61,7 @@ export class AuthService {
     });
 
     return {
-      message: 'User registered successfully. Waiting for admin approval.',
+      message: 'User registered successfully.',
       user,
     };
   }

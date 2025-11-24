@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(cuid())
+  name       String
+  email      String
+  phone      String?
+  password   String?
+  provider   Provider  @default(LOCAL)
+  providerId String?
+  position   Position?
+  role       Role      @default(EMPLOYEE)
+  status     Status    @default(PENDING)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  refreshTokens RefreshToken[]
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+
+  @@unique([email, provider])
+  @@unique([provider, providerId])
+  @@map("users")
+}
+
+enum Provider {
+  LOCAL
+  KAKAO
+}
+
+enum Position {
+  DESIGNER
+  PM
+  FRONTEND
+  BACKEND
+  AI_ENGINEER
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+  DEACTIVATED
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model TokenBlacklist {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("token_blacklist")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts PostCategory[]
+
+  @@map("categories")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  title     String
+  subtitle  String?
+  content   String
+  thumbnail String?
+  views     Int      @default(0)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories PostCategory[]
+  comments   Comment[]
+  likes      Like[]
+
+  @@map("posts")
+}
+
+model PostCategory {
+  id         String   @id @default(cuid())
+  postId     String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, categoryId])
+  @@map("post_categories")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  userId    String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
+}

@@ -15,11 +15,11 @@ export declare class CommentsService {
         };
     } & {
         id: string;
-        content: string;
         createdAt: Date;
         updatedAt: Date;
-        postId: string;
+        content: string;
         userId: string;
+        postId: string;
         parentId: string | null;
     }>;
     findByPostId(postId: string): Promise<({
@@ -38,20 +38,20 @@ export declare class CommentsService {
             };
         } & {
             id: string;
-            content: string;
             createdAt: Date;
             updatedAt: Date;
-            postId: string;
+            content: string;
             userId: string;
+            postId: string;
             parentId: string | null;
         })[];
     } & {
         id: string;
-        content: string;
         createdAt: Date;
         updatedAt: Date;
-        postId: string;
+        content: string;
         userId: string;
+        postId: string;
         parentId: string | null;
     })[]>;
     findOne(id: string): Promise<{
@@ -70,20 +70,20 @@ export declare class CommentsService {
             };
         } & {
             id: string;
-            content: string;
             createdAt: Date;
             updatedAt: Date;
-            postId: string;
+            content: string;
             userId: string;
+            postId: string;
             parentId: string | null;
         })[];
     } & {
         id: string;
-        content: string;
         createdAt: Date;
         updatedAt: Date;
-        postId: string;
+        content: string;
         userId: string;
+        postId: string;
         parentId: string | null;
     }>;
     update(id: string, userId: string, updateCommentDto: UpdateCommentDto): Promise<{
@@ -95,11 +95,11 @@ export declare class CommentsService {
         };
     } & {
         id: string;
-        content: string;
         createdAt: Date;
         updatedAt: Date;
-        postId: string;
+        content: string;
         userId: string;
+        postId: string;
         parentId: string | null;
     }>;
     remove(id: string, userId: string, isAdmin: boolean): Promise<{

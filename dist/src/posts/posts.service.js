@@ -8,14 +8,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const cache_manager_1 = require("@nestjs/cache-manager");
 let PostsService = class PostsService {
     prisma;
-    constructor(prisma) {
+    cacheManager;
+    constructor(prisma, cacheManager) {
         this.prisma = prisma;
+        this.cacheManager = cacheManager;
     }
     async create(userId, createPostDto) {
         const { categoryIds, date, ...postData } = createPostDto;
@@ -54,9 +60,15 @@ let PostsService = class PostsService {
                 },
             },
         });
+        await this.invalidatePostListCache();
         return post;
     }
     async findAll(page = 1, limit = 10, categoryId, search, sortBy = 'createdAt') {
+        const cacheKey = `posts:list:${page}:${limit}:${categoryId || 'all'}:${search || 'none'}:${sortBy}`;
+        const cachedData = await this.cacheManager.get(cacheKey);
+        if (cachedData) {
+            return cachedData;
+        }
         const skip = (page - 1) * limit;
         const where = {};
         if (categoryId) {
@@ -110,7 +122,7 @@ let PostsService = class PostsService {
             }),
             this.prisma.post.count({ where }),
         ]);
-        return {
+        const result = {
             data: posts,
             meta: {
                 total,
@@ -119,8 +131,17 @@ let PostsService = class PostsService {
                 totalPages: Math.ceil(total / limit),
             },
         };
+        await this.cacheManager.set(cacheKey, result, 180);
+        return result;
     }
     async findOne(id, incrementView = false) {
+        if (!incrementView) {
+            const cacheKey = `post:${id}`;
+            const cachedPost = await this.cacheManager.get(cacheKey);
+            if (cachedPost) {
+                return cachedPost;
+            }
+        }
         const post = await this.prisma.post.findUnique({
             where: { id },
             include: {
@@ -149,10 +170,20 @@ let PostsService = class PostsService {
             throw new common_1.NotFoundException('Post not found');
         }
         if (incrementView) {
-            await this.prisma.post.update({
+            this.prisma.post
+                .update({
                 where: { id },
                 data: { views: { increment: 1 } },
+            })
+                .then(() => {
+                this.cacheManager.del(`post:${id}`);
+            })
+                .catch((error) => {
+                console.error('Failed to increment views:', error);
             });
+        }
+        else {
+            await this.cacheManager.set(`post:${id}`, post, 300);
         }
         return post;
     }
@@ -203,6 +234,8 @@ let PostsService = class PostsService {
                 },
             },
         });
+        await this.cacheManager.del(`post:${id}`);
+        await this.invalidatePostListCache();
         return updatedPost;
     }
     async remove(id, userId) {
@@ -218,12 +251,28 @@ let PostsService = class PostsService {
         await this.prisma.post.delete({
             where: { id },
         });
+        await this.cacheManager.del(`post:${id}`);
+        await this.invalidatePostListCache();
         return { message: 'Post deleted successfully' };
+    }
+    async invalidatePostListCache() {
+        const pagesToClear = [1, 2, 3];
+        const limits = [10, 20];
+        const sortOptions = ['createdAt', 'views', 'likes'];
+        for (const page of pagesToClear) {
+            for (const limit of limits) {
+                for (const sortBy of sortOptions) {
+                    const key = `posts:list:${page}:${limit}:all:none:${sortBy}`;
+                    await this.cacheManager.del(key);
+                }
+            }
+        }
     }
 };
 exports.PostsService = PostsService;
 exports.PostsService = PostsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __param(1, (0, common_1.Inject)(cache_manager_1.CACHE_MANAGER)),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, Object])
 ], PostsService);
 //# sourceMappingURL=posts.service.js.map

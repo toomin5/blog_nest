@@ -20,6 +20,7 @@ const comments_module_1 = require("./comments/comments.module");
 const likes_module_1 = require("./likes/likes.module");
 const statistics_module_1 = require("./statistics/statistics.module");
 const notifications_module_1 = require("./notifications/notifications.module");
+const cache_module_1 = require("./cache/cache.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -30,6 +31,7 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 envFilePath: '.env',
             }),
+            cache_module_1.CacheModule,
             prisma_module_1.PrismaModule,
             users_module_1.UsersModule,
             auth_module_1.AuthModule,

@@ -20,8 +20,8 @@ export declare class LikesService {
         } & {
             id: string;
             createdAt: Date;
-            postId: string;
             userId: string;
+            postId: string;
         })[];
     }>;
     checkUserLike(userId: string, postId: string): Promise<{

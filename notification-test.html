@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>실시간 알림 테스트</title>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .card {
+        background: #1e1e2e;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        border: 1px solid #2a2a3e;
+      }
+
+      h1 {
+        color: #e0e0e0;
+        margin-bottom: 24px;
+        font-size: 28px;
+      }
+
+      .connection-section {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      input {
+        flex: 1;
+        min-width: 200px;
+        padding: 12px 16px;
+        border: 2px solid #3a3a4e;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+        background: #2a2a3e;
+        color: #e0e0e0;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      input::placeholder {
+        color: #888;
+      }
+
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .btn-connect {
+        background: #667eea;
+        color: white;
+      }
+
+      .btn-connect:hover:not(:disabled) {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-disconnect {
+        background: #f44336;
+        color: white;
+      }
+
+      .btn-disconnect:hover:not(:disabled) {
+        background: #da190b;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+      }
+
+      .btn-clear {
+        background: #ff9800;
+        color: white;
+      }
+
+      .btn-clear:hover {
+        background: #fb8c00;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .status {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .status.disconnected {
+        background: #ffebee;
+        color: #c62828;
+      }
+
+      .status.connected {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      .info-section {
+        background: #f5f5f5;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .info-section h3 {
+        color: #555;
+        margin-bottom: 12px;
+        font-size: 16px;
+      }
+
+      .info-section p {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 8px;
+      }
+
+      .info-section code {
+        background: #fff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        color: #e91e63;
+      }
+
+      .notifications-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .notifications-header h2 {
+        color: #333;
+        font-size: 20px;
+      }
+
+      .notification-count {
+        background: #667eea;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .notifications-list {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+
+      .notification-item {
+        background: #f8f9fa;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        border-left: 4px solid #667eea;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .notification-item.new {
+        background: #e3f2fd;
+        border-left-color: #2196f3;
+      }
+
+      .notification-type {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+
+      .notification-type.COMMENT {
+        background: #e1f5fe;
+        color: #0277bd;
+      }
+
+      .notification-type.LIKE {
+        background: #fce4ec;
+        color: #c2185b;
+      }
+
+      .notification-message {
+        color: #333;
+        font-size: 14px;
+        margin-bottom: 8px;
+        line-height: 1.5;
+      }
+
+      .notification-time {
+        color: #999;
+        font-size: 12px;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+      }
+
+      .empty-state svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+      }
+
+      /* 스크롤바 스타일 */
+      .notifications-list::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .notifications-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+
+      .notifications-list::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+
+      .notifications-list::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>실시간 알림 테스트</h1>
+
+        <div class="connection-section">
+          <input
+            type="text"
+            id="userIdInput"
+            placeholder="User ID 입력 (예: 1, 2, 3...)"
+            value="1"
+          />
+          <input
+            type="text"
+            id="serverUrlInput"
+            placeholder="서버 URL (기본: http://localhost:3000)"
+            value="http://localhost:3000"
+          />
+          <button id="connectBtn" class="btn-connect">연결</button>
+          <button id="disconnectBtn" class="btn-disconnect" disabled>
+            연결 해제
+          </button>
+        </div>
+
+        <div id="status" class="status disconnected">⚠️ 연결 안됨</div>
+
+        <div class="info-section">
+          <h3>📌 테스트 방법</h3>
+          <p>1. User ID를 입력하고 "연결" 버튼을 클릭하세요</p>
+          <p>2. Postman으로 댓글 또는 좋아요 API를 호출하세요:</p>
+          <p style="margin-left: 16px">
+            • 댓글 작성: <code>POST /comments</code>
+          </p>
+          <p style="margin-left: 16px">• 좋아요: <code>POST /likes</code></p>
+          <p>3. 이 페이지에서 실시간으로 알림이 표시됩니다!</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="notifications-header">
+          <h2>📬 받은 알림</h2>
+          <div>
+            <span class="notification-count" id="notificationCount">0</span>
+            <button id="clearBtn" class="btn-clear" style="margin-left: 12px">
+              전체 삭제
+            </button>
+          </div>
+        </div>
+
+        <div class="notifications-list" id="notificationsList">
+          <div class="empty-state">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
+            </svg>
+            <p>아직 받은 알림이 없습니다</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let socket = null;
+      let notificationCount = 0;
+
+      const userIdInput = document.getElementById('userIdInput');
+      const serverUrlInput = document.getElementById('serverUrlInput');
+      const connectBtn = document.getElementById('connectBtn');
+      const disconnectBtn = document.getElementById('disconnectBtn');
+      const statusEl = document.getElementById('status');
+      const notificationsList = document.getElementById('notificationsList');
+      const notificationCountEl = document.getElementById('notificationCount');
+      const clearBtn = document.getElementById('clearBtn');
+
+      // 연결 버튼 클릭
+      connectBtn.addEventListener('click', () => {
+        const userId = userIdInput.value.trim();
+        const serverUrl =
+          serverUrlInput.value.trim() || 'http://localhost:3000';
+
+        if (!userId) {
+          alert('User ID를 입력해주세요!');
+          return;
+        }
+
+        // Socket.IO 연결 (userId를 쿼리로 전달)
+        socket = io(serverUrl, {
+          query: {
+            userId: userId,
+          },
+        });
+
+        // 연결 성공
+        socket.on('connect', () => {
+          console.log('Connected to server:', socket.id);
+          statusEl.className = 'status connected';
+          statusEl.textContent = `✅ 연결됨 (User ID: ${userId}, Socket ID: ${socket.id})`;
+
+          connectBtn.disabled = true;
+          disconnectBtn.disabled = false;
+          userIdInput.disabled = true;
+          serverUrlInput.disabled = true;
+        });
+
+        // 연결 해제
+        socket.on('disconnect', () => {
+          console.log('Disconnected from server');
+          statusEl.className = 'status disconnected';
+          statusEl.textContent = '⚠️ 연결 안됨';
+
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+          userIdInput.disabled = false;
+          serverUrlInput.disabled = false;
+        });
+
+        // 알림 수신
+        socket.on('notification', (notification) => {
+          console.log('Notification received:', notification);
+          addNotification(notification);
+        });
+
+        // 에러 처리
+        socket.on('connect_error', (error) => {
+          console.error('Connection error:', error);
+          statusEl.className = 'status disconnected';
+          statusEl.textContent = '❌ 연결 실패: ' + error.message;
+        });
+      });
+
+      // 연결 해제 버튼
+      disconnectBtn.addEventListener('click', () => {
+        if (socket) {
+          socket.disconnect();
+          socket = null;
+        }
+      });
+
+      // 전체 삭제 버튼
+      clearBtn.addEventListener('click', () => {
+        notificationsList.innerHTML = `
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <p>아직 받은 알림이 없습니다</p>
+                </div>
+            `;
+        notificationCount = 0;
+        notificationCountEl.textContent = '0';
+      });
+
+      // 알림 추가
+      function addNotification(notification) {
+        // Empty state 제거
+        const emptyState = notificationsList.querySelector('.empty-state');
+        if (emptyState) {
+          notificationsList.innerHTML = '';
+        }
+
+        const notificationEl = document.createElement('div');
+        notificationEl.className = 'notification-item new';
+
+        const time = new Date().toLocaleTimeString('ko-KR');
+
+        // 서버에서 content 필드로 메시지를 보냄
+        const message = notification.content || notification.message || '알림';
+
+        notificationEl.innerHTML = `
+                <span class="notification-type ${notification.type}">${notification.type}</span>
+                <div class="notification-message">${message}</div>
+                <div class="notification-time">📅 ${time}</div>
+            `;
+
+        // 맨 위에 추가
+        notificationsList.insertBefore(
+          notificationEl,
+          notificationsList.firstChild,
+        );
+
+        // 'new' 클래스 3초 후 제거
+        setTimeout(() => {
+          notificationEl.classList.remove('new');
+        }, 3000);
+
+        // 카운트 증가
+        notificationCount++;
+        notificationCountEl.textContent = notificationCount;
+      }
+
+      // Enter 키로 연결
+      userIdInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !connectBtn.disabled) {
+          connectBtn.click();
+        }
+      });
+
+      serverUrlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !connectBtn.disabled) {
+          connectBtn.click();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -2,14 +2,20 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class PostsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async create(userId: string, createPostDto: CreatePostDto) {
     const { categoryIds, date, ...postData } = createPostDto;
@@ -50,6 +56,9 @@ export class PostsService {
       },
     });
 
+    // 캐시 무효화: 게시글 목록 관련 캐시 삭제
+    await this.invalidatePostListCache();
+
     return post;
   }
 
@@ -60,6 +69,15 @@ export class PostsService {
     search?: string,
     sortBy: 'createdAt' | 'views' | 'likes' = 'createdAt',
   ) {
+    // 캐시 키 생성
+    const cacheKey = `posts:list:${page}:${limit}:${categoryId || 'all'}:${search || 'none'}:${sortBy}`;
+
+    // 캐시에서 먼저 확인
+    const cachedData = await this.cacheManager.get(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
     const skip = (page - 1) * limit;
 
     // where 조건 구성
@@ -121,7 +139,7 @@ export class PostsService {
       this.prisma.post.count({ where }),
     ]);
 
-    return {
+    const result = {
       data: posts,
       meta: {
         total,
@@ -130,9 +148,23 @@ export class PostsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+
+    // 캐시에 저장
+    await this.cacheManager.set(cacheKey, result, 180);
+
+    return result;
   }
 
   async findOne(id: string, incrementView: boolean = false) {
+    // 조회수 증가가 필요 없는 경우 캐시 사용
+    if (!incrementView) {
+      const cacheKey = `post:${id}`;
+      const cachedPost = await this.cacheManager.get(cacheKey);
+      if (cachedPost) {
+        return cachedPost;
+      }
+    }
+
     const post = await this.prisma.post.findUnique({
       where: { id },
       include: {
@@ -163,10 +195,22 @@ export class PostsService {
     }
 
     if (incrementView) {
-      await this.prisma.post.update({
-        where: { id },
-        data: { views: { increment: 1 } },
-      });
+      // 조회수는 비동기로 업데이트 (응답 속도 개선)
+      this.prisma.post
+        .update({
+          where: { id },
+          data: { views: { increment: 1 } },
+        })
+        .then(() => {
+          // 조회수 업데이트 후 캐시 무효화
+          this.cacheManager.del(`post:${id}`);
+        })
+        .catch((error) => {
+          console.error('Failed to increment views:', error);
+        });
+    } else {
+      // 조회수 증가 없이 조회하는 경우 캐시에 저장
+      await this.cacheManager.set(`post:${id}`, post, 300);
     }
 
     return post;
@@ -224,6 +268,10 @@ export class PostsService {
       },
     });
 
+    // 캐시 무효화
+    await this.cacheManager.del(`post:${id}`);
+    await this.invalidatePostListCache();
+
     return updatedPost;
   }
 
@@ -244,6 +292,29 @@ export class PostsService {
       where: { id },
     });
 
+    // 캐시 무효화
+    await this.cacheManager.del(`post:${id}`);
+    await this.invalidatePostListCache();
+
     return { message: 'Post deleted successfully' };
+  }
+
+  // 헬퍼 메서드: 게시글 목록 캐시 무효화
+  private async invalidatePostListCache() {
+    // cache-manager v5에서는 패턴 삭제가 직접 지원되지 않음
+    // 프로덕션 환경에서는 Redis SCAN 명령어 사용 권장
+    // 간단한 해결책: 주요 페이지의 캐시만 삭제
+    const pagesToClear = [1, 2, 3]; // 주요 페이지
+    const limits = [10, 20];
+    const sortOptions = ['createdAt', 'views', 'likes'];
+
+    for (const page of pagesToClear) {
+      for (const limit of limits) {
+        for (const sortBy of sortOptions) {
+          const key = `posts:list:${page}:${limit}:all:none:${sortBy}`;
+          await this.cacheManager.del(key);
+        }
+      }
+    }
   }
 }

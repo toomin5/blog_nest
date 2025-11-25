@@ -14,11 +14,11 @@ export declare class CommentsController {
         };
     } & {
         id: string;
-        content: string;
         createdAt: Date;
         updatedAt: Date;
-        postId: string;
+        content: string;
         userId: string;
+        postId: string;
         parentId: string | null;
     }>;
     findByPostId(postId: string): Promise<({
@@ -37,20 +37,20 @@ export declare class CommentsController {
             };
         } & {
             id: string;
-            content: string;
             createdAt: Date;
             updatedAt: Date;
-            postId: string;
+            content: string;
             userId: string;
+            postId: string;
             parentId: string | null;
         })[];
     } & {
         id: string;
-        content: string;
         createdAt: Date;
         updatedAt: Date;
-        postId: string;
+        content: string;
         userId: string;
+        postId: string;
         parentId: string | null;
     })[]>;
     findOne(id: string): Promise<{
@@ -69,20 +69,20 @@ export declare class CommentsController {
             };
         } & {
             id: string;
-            content: string;
             createdAt: Date;
             updatedAt: Date;
-            postId: string;
+            content: string;
             userId: string;
+            postId: string;
             parentId: string | null;
         })[];
     } & {
         id: string;
-        content: string;
         createdAt: Date;
         updatedAt: Date;
-        postId: string;
+        content: string;
         userId: string;
+        postId: string;
         parentId: string | null;
     }>;
     update(id: string, user: UserFromJwt, updateCommentDto: UpdateCommentDto): Promise<{
@@ -94,11 +94,11 @@ export declare class CommentsController {
         };
     } & {
         id: string;
-        content: string;
         createdAt: Date;
         updatedAt: Date;
-        postId: string;
+        content: string;
         userId: string;
+        postId: string;
         parentId: string | null;
     }>;
     remove(id: string, user: UserFromJwt): Promise<{

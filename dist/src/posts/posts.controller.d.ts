@@ -39,9 +39,10 @@ export declare class PostsController {
         content: string;
         thumbnail: string | null;
         views: number;
+        likesCount: number;
         userId: string;
     }>;
-    findAll(page: number, limit: number, categoryId?: string): Promise<{
+    findAll(page: number, limit: number, categoryId?: string, search?: string, sortBy?: 'createdAt' | 'views' | 'likes'): Promise<{
         data: ({
             user: {
                 id: string;
@@ -76,6 +77,7 @@ export declare class PostsController {
             content: string;
             thumbnail: string | null;
             views: number;
+            likesCount: number;
             userId: string;
         })[];
         meta: {
@@ -85,7 +87,7 @@ export declare class PostsController {
             totalPages: number;
         };
     }>;
-    findOne(id: string, incrementView: boolean): Promise<{
+    findOne(id: string): Promise<{
         user: {
             id: string;
             name: string;
@@ -119,6 +121,7 @@ export declare class PostsController {
         content: string;
         thumbnail: string | null;
         views: number;
+        likesCount: number;
         userId: string;
     }>;
     update(id: string, user: UserFromJwt, updatePostDto: UpdatePostDto): Promise<{
@@ -155,6 +158,7 @@ export declare class PostsController {
         content: string;
         thumbnail: string | null;
         views: number;
+        likesCount: number;
         userId: string;
     }>;
     remove(id: string, user: UserFromJwt): Promise<{

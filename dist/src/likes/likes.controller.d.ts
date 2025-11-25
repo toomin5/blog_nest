@@ -1,12 +1,29 @@
 import { LikesService } from './likes.service';
-import { CreateLikeDto } from './dto/create-like.dto';
-import { UpdateLikeDto } from './dto/update-like.dto';
+import type { UserFromJwt } from '../auth/interfaces/user-from-jwt.interface';
 export declare class LikesController {
     private readonly likesService;
     constructor(likesService: LikesService);
-    create(createLikeDto: CreateLikeDto): string;
-    findAll(): string;
-    findOne(id: string): string;
-    update(id: string, updateLikeDto: UpdateLikeDto): string;
-    remove(id: string): string;
+    toggle(postId: string, user: UserFromJwt): Promise<{
+        message: string;
+        liked: boolean;
+    }>;
+    getPostLikes(postId: string): Promise<{
+        count: number;
+        likes: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                position: import(".prisma/client").$Enums.Position | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            postId: string;
+        })[];
+    }>;
+    checkUserLike(postId: string, user: UserFromJwt): Promise<{
+        liked: boolean;
+    }>;
 }

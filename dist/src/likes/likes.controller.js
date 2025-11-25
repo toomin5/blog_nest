@@ -15,65 +15,49 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LikesController = void 0;
 const common_1 = require("@nestjs/common");
 const likes_service_1 = require("./likes.service");
-const create_like_dto_1 = require("./dto/create-like.dto");
-const update_like_dto_1 = require("./dto/update-like.dto");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 let LikesController = class LikesController {
     likesService;
     constructor(likesService) {
         this.likesService = likesService;
     }
-    create(createLikeDto) {
-        return this.likesService.create(createLikeDto);
+    toggle(postId, user) {
+        return this.likesService.toggle(user.id, postId);
     }
-    findAll() {
-        return this.likesService.findAll();
+    getPostLikes(postId) {
+        return this.likesService.getPostLikes(postId);
     }
-    findOne(id) {
-        return this.likesService.findOne(+id);
-    }
-    update(id, updateLikeDto) {
-        return this.likesService.update(+id, updateLikeDto);
-    }
-    remove(id) {
-        return this.likesService.remove(+id);
+    checkUserLike(postId, user) {
+        return this.likesService.checkUserLike(user.id, postId);
     }
 };
 exports.LikesController = LikesController;
 __decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)(':postId'),
+    __param(0, (0, common_1.Param)('postId')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_like_dto_1.CreateLikeDto]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
-], LikesController.prototype, "create", null);
+], LikesController.prototype, "toggle", null);
 __decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], LikesController.prototype, "findAll", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Get)('post/:postId'),
+    __param(0, (0, common_1.Param)('postId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], LikesController.prototype, "findOne", null);
+], LikesController.prototype, "getPostLikes", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('check/:postId'),
+    __param(0, (0, common_1.Param)('postId')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_like_dto_1.UpdateLikeDto]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
-], LikesController.prototype, "update", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], LikesController.prototype, "remove", null);
+], LikesController.prototype, "checkUserLike", null);
 exports.LikesController = LikesController = __decorate([
     (0, common_1.Controller)('likes'),
     __metadata("design:paramtypes", [likes_service_1.LikesService])

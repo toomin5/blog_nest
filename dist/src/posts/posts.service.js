@@ -56,23 +56,36 @@ let PostsService = class PostsService {
         });
         return post;
     }
-    async findAll(page = 1, limit = 10, categoryId) {
+    async findAll(page = 1, limit = 10, categoryId, search, sortBy = 'createdAt') {
         const skip = (page - 1) * limit;
-        const where = categoryId
-            ? {
-                categories: {
-                    some: {
-                        categoryId,
-                    },
+        const where = {};
+        if (categoryId) {
+            where.categories = {
+                some: {
+                    categoryId,
                 },
-            }
-            : {};
+            };
+        }
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: 'insensitive' } },
+                { content: { contains: search, mode: 'insensitive' } },
+                { subtitle: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+        let orderBy = { createdAt: 'desc' };
+        if (sortBy === 'views') {
+            orderBy = { views: 'desc' };
+        }
+        else if (sortBy === 'likes') {
+            orderBy = { likesCount: 'desc' };
+        }
         const [posts, total] = await Promise.all([
             this.prisma.post.findMany({
                 where,
                 skip,
                 take: limit,
-                orderBy: { createdAt: 'desc' },
+                orderBy,
                 include: {
                     user: {
                         select: {

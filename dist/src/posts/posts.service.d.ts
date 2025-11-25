@@ -38,9 +38,10 @@ export declare class PostsService {
         content: string;
         thumbnail: string | null;
         views: number;
+        likesCount: number;
         userId: string;
     }>;
-    findAll(page?: number, limit?: number, categoryId?: string): Promise<{
+    findAll(page?: number, limit?: number, categoryId?: string, search?: string, sortBy?: 'createdAt' | 'views' | 'likes'): Promise<{
         data: ({
             user: {
                 id: string;
@@ -75,6 +76,7 @@ export declare class PostsService {
             content: string;
             thumbnail: string | null;
             views: number;
+            likesCount: number;
             userId: string;
         })[];
         meta: {
@@ -118,6 +120,7 @@ export declare class PostsService {
         content: string;
         thumbnail: string | null;
         views: number;
+        likesCount: number;
         userId: string;
     }>;
     update(id: string, userId: string, updatePostDto: UpdatePostDto): Promise<{
@@ -154,6 +157,7 @@ export declare class PostsService {
         content: string;
         thumbnail: string | null;
         views: number;
+        likesCount: number;
         userId: string;
     }>;
     remove(id: string, userId: string): Promise<{

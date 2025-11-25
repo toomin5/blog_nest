@@ -36,16 +36,16 @@ export class PostsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('categoryId') categoryId?: string,
+    @Query('search') search?: string,
+    @Query('sortBy', new DefaultValuePipe('createdAt'))
+    sortBy?: 'createdAt' | 'views' | 'likes',
   ) {
-    return this.postsService.findAll(page, limit, categoryId);
+    return this.postsService.findAll(page, limit, categoryId, search, sortBy);
   }
 
   @Get(':id')
-  findOne(
-    @Param('id') id: string,
-    @Query('incrementView', new DefaultValuePipe(false)) incrementView: boolean,
-  ) {
-    return this.postsService.findOne(id, incrementView);
+  findOne(@Param('id') id: string) {
+    return this.postsService.findOne(id, true);
   }
 
   @Patch(':id')

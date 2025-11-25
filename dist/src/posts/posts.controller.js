@@ -27,11 +27,11 @@ let PostsController = class PostsController {
     create(user, createPostDto) {
         return this.postsService.create(user.id, createPostDto);
     }
-    findAll(page, limit, categoryId) {
-        return this.postsService.findAll(page, limit, categoryId);
+    findAll(page, limit, categoryId, search, sortBy) {
+        return this.postsService.findAll(page, limit, categoryId, search, sortBy);
     }
-    findOne(id, incrementView) {
-        return this.postsService.findOne(id, incrementView);
+    findOne(id) {
+        return this.postsService.findOne(id, true);
     }
     update(id, user, updatePostDto) {
         return this.postsService.update(id, user.id, updatePostDto);
@@ -55,16 +55,17 @@ __decorate([
     __param(0, (0, common_1.Query)('page', new common_1.DefaultValuePipe(1), common_1.ParseIntPipe)),
     __param(1, (0, common_1.Query)('limit', new common_1.DefaultValuePipe(10), common_1.ParseIntPipe)),
     __param(2, (0, common_1.Query)('categoryId')),
+    __param(3, (0, common_1.Query)('search')),
+    __param(4, (0, common_1.Query)('sortBy', new common_1.DefaultValuePipe('createdAt'))),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number, String]),
+    __metadata("design:paramtypes", [Number, Number, String, String, String]),
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)('incrementView', new common_1.DefaultValuePipe(false))),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Boolean]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "findOne", null);
 __decorate([

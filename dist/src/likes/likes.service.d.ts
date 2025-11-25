@@ -1,9 +1,28 @@
-import { CreateLikeDto } from './dto/create-like.dto';
-import { UpdateLikeDto } from './dto/update-like.dto';
+import { PrismaService } from '../prisma/prisma.service';
 export declare class LikesService {
-    create(createLikeDto: CreateLikeDto): string;
-    findAll(): string;
-    findOne(id: number): string;
-    update(id: number, updateLikeDto: UpdateLikeDto): string;
-    remove(id: number): string;
+    private readonly prisma;
+    constructor(prisma: PrismaService);
+    toggle(userId: string, postId: string): Promise<{
+        message: string;
+        liked: boolean;
+    }>;
+    getPostLikes(postId: string): Promise<{
+        count: number;
+        likes: ({
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                position: import(".prisma/client").$Enums.Position | null;
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            userId: string;
+            postId: string;
+        })[];
+    }>;
+    checkUserLike(userId: string, postId: string): Promise<{
+        liked: boolean;
+    }>;
 }

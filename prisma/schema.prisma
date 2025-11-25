@@ -27,10 +27,12 @@ model User {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  refreshTokens RefreshToken[]
-  posts         Post[]
-  comments      Comment[]
-  likes         Like[]
+  refreshTokens         RefreshToken[]
+  posts                 Post[]
+  comments              Comment[]
+  likes                 Like[]
+  receivedNotifications Notification[] @relation("ReceivedNotifications")
+  sentNotifications     Notification[] @relation("SentNotifications")
 
   @@unique([email, provider])
   @@unique([provider, providerId])
@@ -95,22 +97,23 @@ model Category {
 }
 
 model Post {
-  id         String   @id @default(cuid())
-  date       DateTime @default(now())
-  title      String
-  subtitle   String?
-  content    String
-  thumbnail  String?
-  views      Int      @default(0)
-  likesCount Int      @default(0)
-  userId     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(cuid())
+  date          DateTime @default(now())
+  title         String
+  subtitle      String?
+  content       String
+  thumbnail     String?
+  views         Int      @default(0)
+  likesCount    Int      @default(0)
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categories PostCategory[]
-  comments   Comment[]
-  likes      Like[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories    PostCategory[]
+  comments      Comment[]
+  likes         Like[]
+  notifications Notification[]
 
   @@map("posts")
 }
@@ -156,4 +159,28 @@ model Like {
 
   @@unique([postId, userId])
   @@map("likes")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  content   String
+  postId    String?
+  commentId String?
+  userId    String // 알림을 받을 사용자
+  actorId   String // 알림을 발생시킨 사용자
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user  User  @relation("ReceivedNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor User  @relation("SentNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+  post  Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  COMMENT_ON_POST // 내 게시글에 댓글
+  REPLY_ON_COMMENT // 내 댓글에 답글
+  LIKE_ON_POST // 내 게시글에 좋아요
 }

@@ -12,15 +12,15 @@ export declare class StatisticsController {
         categories: ({
             category: {
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
             };
         } & {
             id: string;
             createdAt: Date;
-            postId: string;
             categoryId: string;
+            postId: string;
         })[];
         _count: {
             comments: number;
@@ -28,6 +28,8 @@ export declare class StatisticsController {
         };
     } & {
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         date: Date;
         title: string;
         subtitle: string | null;
@@ -36,8 +38,6 @@ export declare class StatisticsController {
         views: number;
         likesCount: number;
         userId: string;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     getPopularPostsByLikes(limit: number): Promise<({
         user: {
@@ -49,15 +49,15 @@ export declare class StatisticsController {
         categories: ({
             category: {
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                name: string;
             };
         } & {
             id: string;
             createdAt: Date;
-            postId: string;
             categoryId: string;
+            postId: string;
         })[];
         _count: {
             comments: number;
@@ -65,6 +65,8 @@ export declare class StatisticsController {
         };
     } & {
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         date: Date;
         title: string;
         subtitle: string | null;
@@ -73,8 +75,6 @@ export declare class StatisticsController {
         views: number;
         likesCount: number;
         userId: string;
-        createdAt: Date;
-        updatedAt: Date;
     })[]>;
     getUserStatistics(userId: string): Promise<{
         postsCount: number;

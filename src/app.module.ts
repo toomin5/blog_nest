@@ -12,6 +12,7 @@ import { LikesModule } from './likes/likes.module';
 import { StatisticsModule } from './statistics/statistics.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CacheModule } from './cache/cache.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CacheModule } from './cache/cache.module';
     LikesModule,
     StatisticsModule,
     NotificationsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

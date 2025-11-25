@@ -1,9 +1,11 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class CommentsService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly notificationsService;
+    constructor(prisma: PrismaService, notificationsService: NotificationsService);
     create(userId: string, createCommentDto: CreateCommentDto): Promise<{
         user: {
             id: string;
@@ -13,11 +15,11 @@ export declare class CommentsService {
         };
     } & {
         id: string;
+        content: string;
         createdAt: Date;
         updatedAt: Date;
-        content: string;
-        userId: string;
         postId: string;
+        userId: string;
         parentId: string | null;
     }>;
     findByPostId(postId: string): Promise<({
@@ -36,20 +38,20 @@ export declare class CommentsService {
             };
         } & {
             id: string;
+            content: string;
             createdAt: Date;
             updatedAt: Date;
-            content: string;
-            userId: string;
             postId: string;
+            userId: string;
             parentId: string | null;
         })[];
     } & {
         id: string;
+        content: string;
         createdAt: Date;
         updatedAt: Date;
-        content: string;
-        userId: string;
         postId: string;
+        userId: string;
         parentId: string | null;
     })[]>;
     findOne(id: string): Promise<{
@@ -68,20 +70,20 @@ export declare class CommentsService {
             };
         } & {
             id: string;
+            content: string;
             createdAt: Date;
             updatedAt: Date;
-            content: string;
-            userId: string;
             postId: string;
+            userId: string;
             parentId: string | null;
         })[];
     } & {
         id: string;
+        content: string;
         createdAt: Date;
         updatedAt: Date;
-        content: string;
-        userId: string;
         postId: string;
+        userId: string;
         parentId: string | null;
     }>;
     update(id: string, userId: string, updateCommentDto: UpdateCommentDto): Promise<{
@@ -93,11 +95,11 @@ export declare class CommentsService {
         };
     } & {
         id: string;
+        content: string;
         createdAt: Date;
         updatedAt: Date;
-        content: string;
-        userId: string;
         postId: string;
+        userId: string;
         parentId: string | null;
     }>;
     remove(id: string, userId: string, isAdmin: boolean): Promise<{

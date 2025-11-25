@@ -1,7 +1,9 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class LikesService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly notificationsService;
+    constructor(prisma: PrismaService, notificationsService: NotificationsService);
     toggle(userId: string, postId: string): Promise<{
         message: string;
         liked: boolean;
@@ -18,8 +20,8 @@ export declare class LikesService {
         } & {
             id: string;
             createdAt: Date;
-            userId: string;
             postId: string;
+            userId: string;
         })[];
     }>;
     checkUserLike(userId: string, postId: string): Promise<{

@@ -19,8 +19,8 @@ export declare class LikesController {
         } & {
             id: string;
             createdAt: Date;
-            userId: string;
             postId: string;
+            userId: string;
         })[];
     }>;
     checkUserLike(postId: string, user: UserFromJwt): Promise<{

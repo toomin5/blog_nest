@@ -1,19 +1,47 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 @Injectable()
 export class LikesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async toggle(userId: string, postId: string) {
     // 게시글 존재 확인
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!post) {
       throw new NotFoundException('게시글을 찾을 수 없습니다.');
     }
+
+    // 좋아요한 사용자 정보 가져오기
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
 
     // 기존 좋아요 확인
     const existingLike = await this.prisma.like.findUnique({
@@ -56,6 +84,17 @@ export class LikesService {
         data: { likesCount: { increment: 1 } },
       }),
     ]);
+
+    // 좋아요 알림 생성
+    if (user) {
+      await this.notificationsService.createNotification(
+        NotificationType.LIKE_ON_POST,
+        `${user.name}님이 회원님의 게시글을 좋아합니다.`,
+        post.userId,
+        userId,
+        postId,
+      );
+    }
 
     return {
       message: '좋아요를 눌렀습니다.',

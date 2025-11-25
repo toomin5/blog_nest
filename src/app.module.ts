@@ -10,6 +10,7 @@ import { PostsModule } from './posts/posts.module';
 import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
 import { StatisticsModule } from './statistics/statistics.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { StatisticsModule } from './statistics/statistics.module';
     CommentsModule,
     LikesModule,
     StatisticsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

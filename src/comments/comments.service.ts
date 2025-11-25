@@ -2,14 +2,22 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => NotificationsService))
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async create(userId: string, createCommentDto: CreateCommentDto) {
     const { content, postId, parentId } = createCommentDto;
@@ -17,30 +25,49 @@ export class CommentsService {
     // 게시글 존재 확인
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!post) {
       throw new NotFoundException('게시글을 찾을 수 없습니다.');
     }
 
+    let parentComment: { userId: string } | null = null;
     // 부모 댓글 존재 확인 (대댓글인 경우)
     if (parentId) {
-      const parentComment = await this.prisma.comment.findUnique({
+      const foundParentComment = await this.prisma.comment.findUnique({
         where: { id: parentId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       });
 
-      if (!parentComment) {
+      if (!foundParentComment) {
         throw new NotFoundException('부모 댓글을 찾을 수 없습니다.');
       }
 
-      if (parentComment.postId !== postId) {
+      if (foundParentComment.postId !== postId) {
         throw new ForbiddenException(
           '부모 댓글과 같은 게시글에만 대댓글을 작성할 수 있습니다.',
         );
       }
+
+      parentComment = foundParentComment;
     }
 
-    return this.prisma.comment.create({
+    const comment = await this.prisma.comment.create({
       data: {
         content,
         userId,
@@ -58,6 +85,31 @@ export class CommentsService {
         },
       },
     });
+
+    // 알림 생성
+    if (parentId && parentComment) {
+      // 대댓글인 경우 - 부모 댓글 작성자에게 알림
+      await this.notificationsService.createNotification(
+        NotificationType.REPLY_ON_COMMENT,
+        `${comment.user.name}님이 회원님의 댓글에 답글을 달았습니다.`,
+        parentComment.userId,
+        userId,
+        postId,
+        comment.id,
+      );
+    } else {
+      // 일반 댓글인 경우 - 게시글 작성자에게 알림
+      await this.notificationsService.createNotification(
+        NotificationType.COMMENT_ON_POST,
+        `${comment.user.name}님이 회원님의 게시글에 댓글을 달았습니다.`,
+        post.userId,
+        userId,
+        postId,
+        comment.id,
+      );
+    }
+
+    return comment;
   }
 
   async findByPostId(postId: string) {
@@ -135,11 +187,7 @@ export class CommentsService {
     return comment;
   }
 
-  async update(
-    id: string,
-    userId: string,
-    updateCommentDto: UpdateCommentDto,
-  ) {
+  async update(id: string, userId: string, updateCommentDto: UpdateCommentDto) {
     const comment = await this.prisma.comment.findUnique({
       where: { id },
     });

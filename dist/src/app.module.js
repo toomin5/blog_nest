@@ -19,6 +19,7 @@ const posts_module_1 = require("./posts/posts.module");
 const comments_module_1 = require("./comments/comments.module");
 const likes_module_1 = require("./likes/likes.module");
 const statistics_module_1 = require("./statistics/statistics.module");
+const notifications_module_1 = require("./notifications/notifications.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -37,6 +38,7 @@ exports.AppModule = AppModule = __decorate([
             comments_module_1.CommentsModule,
             likes_module_1.LikesModule,
             statistics_module_1.StatisticsModule,
+            notifications_module_1.NotificationsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
